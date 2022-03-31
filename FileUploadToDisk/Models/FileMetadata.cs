@@ -1,6 +1,6 @@
 ﻿namespace FileUploadToDisk.Models
 {
-    public class FileInfo
+    public class FileMetadata
     {
         public int Id { get; set; }
         public string? OriginalFilename { get; set; }
