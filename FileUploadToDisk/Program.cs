@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using FileUploadToDisk.Data;
+using Microsoft.AspNetCore.Http.Features;
+
 var builder = WebApplication.CreateBuilder(args);
 
 //builder.Services.AddDbContext<FileUploadToDiskContext>(options =>
@@ -11,6 +13,14 @@ builder.Services.AddDbContext<FileUploadToDiskContext>(options =>
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Increase MultipartBodyLengthLimit for handling streaming of large files, default is 128 MB.
+// Alternatively, set [RequestFormLimits(MultipartBodyLengthLimit = 268435456)] on affected pages/actions.
+//builder.Services.Configure<FormOptions>(options =>
+//{
+//    // Set the limit to 256 MB
+//    options.MultipartBodyLengthLimit = 268435456;
+//});
 
 var app = builder.Build();
 
