@@ -3,8 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using FileUploadToDisk.Data;
 var builder = WebApplication.CreateBuilder(args);
 
+//builder.Services.AddDbContext<FileUploadToDiskContext>(options =>
+//    options.UseSqlServer(builder.Configuration.GetConnectionString("FileUploadToDiskContext")));
 builder.Services.AddDbContext<FileUploadToDiskContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("FileUploadToDiskContext")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("FileUploadToDiskContextSqlite")));
+
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -28,6 +31,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Files}/{action=Index}/{id?}");
 
 app.Run();
