@@ -1,4 +1,10 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using FileUploadToDisk.Data;
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<FileUploadToDiskContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("FileUploadToDiskContext")));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
