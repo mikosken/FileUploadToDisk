@@ -146,6 +146,13 @@ namespace FileUploadToDisk.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // GET: Files/Upload
+        public IActionResult Upload()
+        {
+            return View();
+        }
+
+
         private bool FileMetadataExists(int id)
         {
             return _context.FileMetadata.Any(e => e.Id == id);
