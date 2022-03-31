@@ -2,13 +2,13 @@
 {
     public class FileInfo
     {
-        int Id { get; set; }
-        string? OriginalFilename { get; set; }
+        public int Id { get; set; }
+        public string? OriginalFilename { get; set; }
 
         // Generated/safe filename.
-        string? Filename { get; set; }
+        public string? Filename { get; set; }
 
-        DateTime UploadedDateTime { get; set; } = DateTime.Now;
-        long FileSize { get; set; }
+        public DateTime UploadedDateTime { get; set; } = DateTime.Now;
+        public long FileSize { get; set; }
     }
 }
