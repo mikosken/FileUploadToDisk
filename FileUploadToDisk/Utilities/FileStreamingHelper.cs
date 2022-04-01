@@ -1,12 +1,10 @@
-﻿// This utility class is sourced from code in a Microsoft documentation sample app at:
+﻿// This utility class is modified from code in a Microsoft documentation sample app at:
 // https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/mvc/models/file-uploads/samples/3.x/SampleApp/Controllers/StreamingController.cs
 //
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 using SampleApp.Utilities;
-using System.Globalization;
 using System.Text;
 
 namespace FileUploadToDisk.Utilities
@@ -14,8 +12,12 @@ namespace FileUploadToDisk.Utilities
 	public static class FileStreamingHelper
 	{
 		private static readonly FormOptions _defaultFormOptions = new FormOptions();
-		public static async Task<FormValueProvider> StreamFile(this HttpRequest request, Stream targetStream)
+		// Generates a temporary filename for each file encountered in multipart request and saves to specified folder.
+		public static async Task<Dictionary<string, string>> StreamFilesToDisk(HttpRequest request, string targetFilePath)
 		{
+			// Key is randomly generated safe filename, value i soriginal untrusted filename.
+			Dictionary<string, string> writtenFiles = new Dictionary<string, string>();
+
 			if (!MultipartRequestHelper.IsMultipartContentType(request.ContentType))
 			{
 				throw new Exception($"Expected a multipart request, but got {request.ContentType}");
@@ -23,12 +25,13 @@ namespace FileUploadToDisk.Utilities
 			// Used to accumulate all the form url encoded key value pairs in the 
 			// request.
 			var formAccumulator = new KeyValueAccumulator();
-			string targetFilePath = null;
+
 			var boundary = MultipartRequestHelper.GetBoundary(
 				MediaTypeHeaderValue.Parse(request.ContentType),
 				_defaultFormOptions.MultipartBoundaryLengthLimit);
 			var reader = new MultipartReader(boundary, request.Body);
 			var section = await reader.ReadNextSectionAsync();
+
 			while (section != null)
 			{
 				ContentDispositionHeaderValue contentDisposition;
@@ -37,7 +40,19 @@ namespace FileUploadToDisk.Utilities
 				{
 					if (MultipartRequestHelper.HasFileContentDisposition(contentDisposition))
 					{
-						await section.Body.CopyToAsync(targetStream);
+						// Metadata for uploaded file.
+						var untrustedFileName = contentDisposition.FileName.Value;
+
+						var trustedFileNameForFileStorage = Path.GetRandomFileName();
+
+						using (var targetStream = System.IO.File.Create(
+							Path.Combine(targetFilePath, trustedFileNameForFileStorage)))
+						{
+							await section.Body.CopyToAsync(targetStream);
+
+							writtenFiles.Add(trustedFileNameForFileStorage, contentDisposition.FileName.Value);
+							// Log that file has been written here.
+						}
 					}
 					else if (MultipartRequestHelper.HasFormDataContentDisposition(contentDisposition))
 					{
@@ -73,13 +88,10 @@ namespace FileUploadToDisk.Utilities
 				// reads the headers for the next section.
 				section = await reader.ReadNextSectionAsync();
 			}
-			// Bind form data to a model
-			var formValueProvider = new FormValueProvider(
-				BindingSource.Form,
-				new FormCollection(formAccumulator.GetResults()),
-				CultureInfo.CurrentCulture);
-			return formValueProvider;
+
+			return writtenFiles;
 		}
+
 		private static Encoding GetEncoding(MultipartSection section)
 		{
 			MediaTypeHeaderValue mediaType;
