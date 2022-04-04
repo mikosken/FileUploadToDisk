@@ -54,10 +54,7 @@
                 <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
             </td>
             <td>
-                <form asp-action="DownloadFile" method="get">
-                  <input type="text" id="fileId" value="@item.Id" hidden>
-                  <input class="btn btn-primary" type="submit" value="Download">
-                </form>
+                <a asp-action="DownloadFile" asp-route-fileId="@item.Id" class="btn btn-outline-primary">Download</a>
             </td>
         </tr>
 }

@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Net;
 using FileUploadToDisk.Utilities;
+using System.Net.Mime;
 
 namespace FileUploadToDisk.Controllers
 {
@@ -128,7 +129,7 @@ namespace FileUploadToDisk.Controllers
         [DisableFormValueModelBinding]
 
         [HttpGet]
-        public async Task<IActionResult> DownloadFile([FromQuery] int fileId)
+        public async Task<IActionResult> DownloadFile(int fileId)
         {
             var md = await _context.FileMetadata.Where(f => f.Id == fileId).FirstOrDefaultAsync();
 
@@ -137,8 +138,14 @@ namespace FileUploadToDisk.Controllers
                 return NotFound();
             }
 
-            var stream = new FileStream(Path.Combine(_targetFilePath, md.Filename) , FileMode.Open);
+            var stream = new FileStream(Path.Combine(_targetFilePath, md.Filename), FileMode.Open);
+
+            BinaryReader binaryReader = new BinaryReader(stream);
+
             return File(stream, md.MimeType, md.OriginalFilename);
+            // See also:
+            //FileStreamResult()
+            //FileContentResult()
         }
 
 
