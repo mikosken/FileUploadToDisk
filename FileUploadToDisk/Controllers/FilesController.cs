@@ -114,8 +114,22 @@ namespace FileUploadToDisk.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var fileMetadata = await _context.FileMetadata.FindAsync(id);
-            _context.FileMetadata.Remove(fileMetadata);
-            await _context.SaveChangesAsync();
+            if (fileMetadata != null && System.IO.File.Exists(Path.Combine(_targetFilePath, fileMetadata.Filename)))
+            {
+                try
+                {
+                    // Delete file from disk.
+                    System.IO.File.Delete(Path.Combine(_targetFilePath, fileMetadata.Filename));
+
+                    // Delete metadata from context.
+                    _context.FileMetadata.Remove(fileMetadata);
+                    await _context.SaveChangesAsync();
+                } catch (Exception e)
+                {
+                    return StatusCode(500, "Internal server error. Unable to delete file.");
+                }
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
