@@ -1,6 +1,7 @@
 ﻿// This utility class is modified from code in a Microsoft documentation sample app at:
 // https://github.com/dotnet/AspNetCore.Docs/blob/main/aspnetcore/mvc/models/file-uploads/samples/3.x/SampleApp/Controllers/StreamingController.cs
 //
+using FileUploadToDisk.Models;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
@@ -13,10 +14,11 @@ namespace FileUploadToDisk.Utilities
 	{
 		private static readonly FormOptions _defaultFormOptions = new FormOptions();
 		// Generates a temporary filename for each file encountered in multipart request and saves to specified folder.
-		public static async Task<Dictionary<string, string>> StreamFilesToDisk(HttpRequest request, string targetFilePath)
+		public static async Task<List<FileMetadata>> StreamFilesToDisk(HttpRequest request, string targetFilePath)
 		{
-			// Key is randomly generated safe filename, value i soriginal untrusted filename.
-			Dictionary<string, string> writtenFiles = new Dictionary<string, string>();
+			// Keep track of metadata.
+			// Key is randomly generated safe filename, value is original untrusted filename.
+			List<FileMetadata> writtenFiles = new List<FileMetadata>();
 
 			if (!MultipartRequestHelper.IsMultipartContentType(request.ContentType))
 			{
@@ -40,17 +42,18 @@ namespace FileUploadToDisk.Utilities
 				{
 					if (MultipartRequestHelper.HasFileContentDisposition(contentDisposition))
 					{
-						// Metadata for uploaded file.
-						var untrustedFileName = contentDisposition.FileName.Value;
-
 						var trustedFileNameForFileStorage = Path.GetRandomFileName();
+						// Metadata for uploaded file.
+						var meta = new FileMetadata();
+						meta.Filename = trustedFileNameForFileStorage;
+						meta.OriginalFilename = contentDisposition.FileName.Value;
+						meta.MimeType = section.ContentType;
 
 						using (var targetStream = System.IO.File.Create(
 							Path.Combine(targetFilePath, trustedFileNameForFileStorage)))
 						{
 							await section.Body.CopyToAsync(targetStream);
-
-							writtenFiles.Add(trustedFileNameForFileStorage, contentDisposition.FileName.Value);
+							writtenFiles.Add(meta);
 							// Log that file has been written here.
 						}
 					}

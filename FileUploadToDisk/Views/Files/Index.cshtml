@@ -19,11 +19,15 @@
                 @Html.DisplayNameFor(model => model.Filename)
             </th>
             <th>
+                @Html.DisplayNameFor(model => model.MimeType)
+            </th>
+            <th>
                 @Html.DisplayNameFor(model => model.UploadedDateTime)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.FileSize)
             </th>
+            <th></th>
             <th></th>
         </tr>
     </thead>
@@ -37,6 +41,9 @@
                 @Html.DisplayFor(modelItem => item.Filename)
             </td>
             <td>
+                @Html.DisplayFor(modelItem => item.MimeType)
+            </td>
+            <td>
                 @Html.DisplayFor(modelItem => item.UploadedDateTime)
             </td>
             <td>
@@ -45,6 +52,12 @@
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> | 
                 <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+            <td>
+                <form asp-action="DownloadFile" method="get">
+                  <input type="text" id="fileId" value="@item.Id" hidden>
+                  <input class="btn btn-primary" type="submit" value="Download">
+                </form>
             </td>
         </tr>
 }

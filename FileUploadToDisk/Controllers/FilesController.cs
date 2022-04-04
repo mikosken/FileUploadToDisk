@@ -127,6 +127,21 @@ namespace FileUploadToDisk.Controllers
         [HttpPost]
         [DisableFormValueModelBinding]
 
+        [HttpGet]
+        public async Task<IActionResult> DownloadFile([FromQuery] int fileId)
+        {
+            var md = await _context.FileMetadata.Where(f => f.Id == fileId).FirstOrDefaultAsync();
+
+            if (md == null)
+            {
+                return NotFound();
+            }
+
+            var stream = new FileStream(Path.Combine(_targetFilePath, md.Filename) , FileMode.Open);
+            return File(stream, md.MimeType, md.OriginalFilename);
+        }
+
+
         // !!!!!
         // Can't use ValidateAntiForgeryToken as it reads the request body,
         // and then the data can't be read a second timeby the MultiPartReader, giving
@@ -139,16 +154,12 @@ namespace FileUploadToDisk.Controllers
         {
             var uploadedFiles = await FileStreamingHelper.StreamFilesToDisk(Request, _targetFilePath);
 
-            foreach (KeyValuePair<string, string> filenames in uploadedFiles)
+            foreach (var meta in uploadedFiles)
             {
-                // Create metadata object.
-                var meta = new FileMetadata();
-                meta.Filename = filenames.Key;
-                meta.OriginalFilename = filenames.Value;
+                // Add metadata object to context.
                 _context.Add(meta);
             }
 
-            //meta.FileSize = fileSize;
             await _context.SaveChangesAsync();
 
             // Perhaps return a nice summary of uploaded files?
