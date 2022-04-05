@@ -24,7 +24,6 @@ namespace FileUploadToDisk.Controllers
     {
         private readonly FileUploadToDiskContext _context;
         private static readonly FormOptions _defaultFormOptions = new FormOptions();
-        private readonly string[] _permittedExtensions = { ".txt", ".pdf" };
         private readonly long _fileSizeLimit = 4294967296;
         private readonly string _targetFilePath = @"C:\temptest\";
 
@@ -40,7 +39,7 @@ namespace FileUploadToDisk.Controllers
         }
 
         // GET: Files/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(string? id)
         {
             if (id == null)
             {
@@ -60,7 +59,7 @@ namespace FileUploadToDisk.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,OriginalFilename,Filename,UploadedDateTime,FileSize")] FileMetadata fileMetadata)
+        public async Task<IActionResult> Edit(string id, [Bind("Id,OriginalFilename,Filename,MimeType,UploadedDateTime,FileSize")] FileMetadata fileMetadata)
         {
             if (id != fileMetadata.Id)
             {
@@ -91,7 +90,7 @@ namespace FileUploadToDisk.Controllers
         }
 
         // GET: Files/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(string? id)
         {
             if (id == null)
             {
@@ -111,7 +110,7 @@ namespace FileUploadToDisk.Controllers
         // POST: Files/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(string? id)
         {
             var fileMetadata = await _context.FileMetadata.FindAsync(id);
             if (fileMetadata != null && System.IO.File.Exists(Path.Combine(_targetFilePath, fileMetadata.Filename)))
@@ -138,12 +137,9 @@ namespace FileUploadToDisk.Controllers
         {
             return View();
         }
-        // POST: Files/ProcessUpload
-        [HttpPost]
-        [DisableFormValueModelBinding]
 
         [HttpGet]
-        public async Task<IActionResult> DownloadFile(int fileId)
+        public async Task<IActionResult> DownloadFile(string fileId)
         {
             var md = await _context.FileMetadata.Where(f => f.Id == fileId).FirstOrDefaultAsync();
 
@@ -154,8 +150,10 @@ namespace FileUploadToDisk.Controllers
 
             var stream = new FileStream(Path.Combine(_targetFilePath, md.Filename), FileMode.Open);
 
-            BinaryReader binaryReader = new BinaryReader(stream);
-
+            if (md.MimeType == "" || md.MimeType == null)
+            {
+                return File(stream, "application/octet-stream", md.OriginalFilename);
+            }
             return File(stream, md.MimeType, md.OriginalFilename);
             // See also:
             //FileStreamResult()
@@ -169,6 +167,9 @@ namespace FileUploadToDisk.Controllers
         // an "IOException: Unexpected end of Stream, the content may have already been read by another component."
         // !!!!!
         //[ValidateAntiForgeryToken]
+        // POST: Files/ProcessUpload
+        [HttpPost]
+        [DisableFormValueModelBinding]
         [RequestFormLimits(MultipartBodyLengthLimit = 4294967296)] // 4294967296 byte = 4 GB. 268435456 byte = 256 MB.
         [RequestSizeLimit(4294967296)] // 4 GB. Required to increase size limit for Kestrel.
         public async Task<IActionResult> ProcessUpload()
@@ -186,7 +187,7 @@ namespace FileUploadToDisk.Controllers
             // Perhaps return a nice summary of uploaded files?
             return RedirectToAction(nameof(Index));
         }
-        private bool FileMetadataExists(int id)
+        private bool FileMetadataExists(string id)
         {
             return _context.FileMetadata.Any(e => e.Id == id);
         }
