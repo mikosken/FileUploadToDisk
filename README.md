@@ -1,6 +1,6 @@
 # FileUploadToDisk
 
-An exercise in making a web app for uploading/downloading large files by streaming directly to disk on the server.
+An exercise in making a web app in ASP.NET Core for uploading/downloading large files by streaming directly to disk, without storing in memory, on the server.
 
 ### Features
 * Capable of handling multiple uploaded files at once from client.
